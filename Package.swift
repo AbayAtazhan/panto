@@ -12,6 +12,12 @@ let package = Package(
             name: "Panto",
             path: "Sources/Panto",
             swiftSettings: [.swiftLanguageMode(.v5)]
+        ),
+        .testTarget(
+            name: "PantoTests",
+            dependencies: ["Panto"],
+            path: "Tests/PantoTests",
+            swiftSettings: [.swiftLanguageMode(.v5)]
         )
     ]
 )

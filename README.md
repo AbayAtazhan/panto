@@ -6,6 +6,8 @@ Every click — or every press of your own hotkey — becomes a camera move.
 ![Panto demo](docs/demo.gif)
 
 <p>
+<img alt="CI" src="https://github.com/USER/panto/actions/workflows/build.yml/badge.svg">
+<img alt="Release" src="https://img.shields.io/github/v/release/USER/panto">
 <img alt="macOS 15+" src="https://img.shields.io/badge/macOS-15%2B-black">
 <img alt="Swift" src="https://img.shields.io/badge/Swift-6-orange">
 <img alt="MIT" src="https://img.shields.io/badge/license-MIT-blue">
@@ -141,6 +143,17 @@ swift build -c release                # build the binary
 
 `--selftest` renders a fake landing page, applies the camera move and dumps frames — the fastest
 way to check a change to the zoom math without recording anything or granting permissions.
+
+## Contributing
+
+Bug reports, pull requests and README translations are welcome — see
+[CONTRIBUTING.md](CONTRIBUTING.md). Good first issues are labelled in the tracker,
+security reports go through [SECURITY.md](SECURITY.md).
+
+## Architecture
+
+The capture → timeline → camera → export pipeline, the TCC/signing story and the release
+tooling are documented in [docs/architecture.md](docs/architecture.md).
 
 ## License
 

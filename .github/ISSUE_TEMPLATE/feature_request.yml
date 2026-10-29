@@ -1,0 +1,24 @@
+name: Feature request
+description: Suggest something Panto should do
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem are you trying to solve?
+      description: Describe the recording you were trying to make, not the implementation.
+    validations:
+      required: true
+
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like Panto to do?
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: What do you use today?
+      description: Screen Studio, OBS, manual keyframes in Final Cut…

@@ -4,11 +4,11 @@ import SwiftUI
 struct ContentView: View {
     @EnvironmentObject private var state: AppState
     @EnvironmentObject private var settings: AppSettings
+    @State private var hoveringRecord = false
 
     var body: some View {
         VStack(spacing: 0) {
             header
-            Divider().opacity(0.6)
             VStack(spacing: 12) {
                 recordCard
                 settingsCard
@@ -16,20 +16,13 @@ struct ContentView: View {
                     permissionBanner
                 }
             }
-            .padding(16)
+            .padding(.horizontal, 16)
+            .padding(.bottom, 4)
             footer
         }
-        .frame(width: 460)
-        .background(
-            LinearGradient(
-                colors: [
-                    Color(nsColor: .windowBackgroundColor),
-                    Color.accentColor.opacity(0.05)
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-        )
+        .frame(width: 480)
+        .background(background)
+        .animation(.spring(response: 0.35, dampingFraction: 0.85), value: state.isRecording)
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             state.refreshEnvironment()
         }
@@ -38,41 +31,75 @@ struct ContentView: View {
         }
     }
 
-    // MARK: - Header
+    // MARK: - Chrome
+
+    private var background: some View {
+        ZStack {
+            Color(nsColor: .windowBackgroundColor)
+            RadialGradient(
+                colors: [Color.accentColor.opacity(0.18), Color.accentColor.opacity(0)],
+                center: UnitPoint(x: 0.08, y: 0.0),
+                startRadius: 8,
+                endRadius: 460
+            )
+        }
+        .ignoresSafeArea()
+    }
 
     private var header: some View {
         HStack(spacing: 12) {
             Image(nsImage: NSApp.applicationIconImage)
                 .resizable()
-                .frame(width: 42, height: 42)
-                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .frame(width: 44, height: 44)
+                .clipShape(RoundedRectangle(cornerRadius: 11, style: .continuous))
+                .shadow(color: .black.opacity(0.18), radius: 7, y: 2)
 
-            VStack(alignment: .leading, spacing: 1) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text("Panto")
-                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                    .font(.system(size: 22, weight: .bold, design: .rounded))
                 Text("Screen recordings with a camera")
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
             }
 
             Spacer()
-
-            Text("0.2")
-                .font(.system(size: 10, weight: .semibold, design: .monospaced))
-                .padding(.horizontal, 7)
-                .padding(.vertical, 3)
-                .background(Capsule().fill(Color.primary.opacity(0.06)))
-                .foregroundStyle(.secondary)
+            statusPill
         }
         .padding(.horizontal, 18)
         .padding(.top, 16)
         .padding(.bottom, 13)
     }
 
+    private var statusPill: some View {
+        let active = state.isRecording
+        let color: Color = active ? .red : .green
+        return HStack(spacing: 5) {
+            Circle()
+                .fill(color)
+                .frame(width: 6, height: 6)
+            Text(active ? "REC" : "READY")
+                .font(.system(size: 9, weight: .heavy, design: .monospaced))
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(Capsule().fill(color.opacity(0.12)))
+        .foregroundStyle(color)
+    }
+
+    private var card: some View {
+        RoundedRectangle(cornerRadius: 18, style: .continuous)
+            .fill(.regularMaterial)
+            .overlay(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .strokeBorder(Color.white.opacity(0.10))
+            )
+            .shadow(color: .black.opacity(0.07), radius: 12, y: 4)
+    }
+
     // MARK: - Record
 
     private var recordCard: some View {
-        HStack(spacing: 15) {
+        HStack(spacing: 16) {
             Button {
                 state.toggle()
             } label: {
@@ -80,11 +107,12 @@ struct ContentView: View {
             }
             .buttonStyle(.plain)
             .disabled(state.isBusy)
+            .onHover { hoveringRecord = $0 }
             .help(state.isRecording ? "Stop and edit" : "Start recording")
 
             VStack(alignment: .leading, spacing: 3) {
-                Text(state.isRecording ? "Recording" : "Ready")
-                    .font(.system(size: 15, weight: .semibold))
+                Text(state.isRecording ? "Recording" : "Ready to record")
+                    .font(.system(size: 16, weight: .semibold))
 
                 Text(state.status)
                     .font(.system(size: 11))
@@ -92,68 +120,69 @@ struct ContentView: View {
                     .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
 
-                if state.isRecording {
-                    Text("Press \(settings.hotKey.label) to zoom at the pointer")
-                        .font(.system(size: 10))
-                        .foregroundStyle(.secondary)
-                }
+                Text(state.isRecording
+                     ? "Press \(settings.hotKey.label) to zoom at the pointer"
+                     : settings.trigger.detail)
+                    .font(.system(size: 10))
+                    .foregroundStyle(.tertiary)
             }
 
             Spacer(minLength: 0)
 
             if state.isRecording || state.isBusy {
                 Text(timecode(state.elapsed))
-                    .font(.system(size: 22, weight: .medium, design: .monospaced))
-                    .foregroundStyle(state.isRecording ? Color.red : .secondary)
+                    .font(.system(size: 24, weight: .medium, design: .monospaced))
                     .monospacedDigit()
+                    .foregroundStyle(state.isRecording ? Color.red : .secondary)
             }
         }
-        .padding(14)
-        .background(cardBackground)
+        .padding(16)
+        .background(card)
     }
 
     private var recordButton: some View {
         ZStack {
             Circle()
-                .fill(Color.red.opacity(0.12))
-                .frame(width: 66, height: 66)
+                .stroke(Color.red.opacity(0.16), lineWidth: 9)
+                .frame(width: 82, height: 82)
+                .scaleEffect(state.isRecording ? 1.04 : 1)
+
             Circle()
                 .fill(
                     LinearGradient(
-                        colors: [Color(red: 1.0, green: 0.34, blue: 0.31), Color(red: 0.78, green: 0.08, blue: 0.12)],
+                        colors: [Color(red: 1.0, green: 0.36, blue: 0.33), Color(red: 0.76, green: 0.07, blue: 0.12)],
                         startPoint: .top,
                         endPoint: .bottom
                     )
                 )
-                .frame(width: 52, height: 52)
-                .shadow(color: .red.opacity(0.3), radius: 8, y: 3)
+                .frame(width: 60, height: 60)
+                .shadow(color: .red.opacity(0.35), radius: 10, y: 4)
 
             if state.isBusy {
-                ProgressView()
-                    .controlSize(.small)
-                    .tint(.white)
+                ProgressView().controlSize(.small).tint(.white)
             } else if state.isRecording {
                 RoundedRectangle(cornerRadius: 5, style: .continuous)
                     .fill(Color.white)
-                    .frame(width: 17, height: 17)
+                    .frame(width: 18, height: 18)
             } else {
                 Image(systemName: "video.fill")
-                    .font(.system(size: 20, weight: .semibold))
+                    .font(.system(size: 22, weight: .semibold))
                     .foregroundStyle(.white)
             }
         }
+        .scaleEffect(hoveringRecord && !state.isBusy ? 1.04 : 1)
+        .animation(.easeOut(duration: 0.15), value: hoveringRecord)
     }
 
     // MARK: - Settings
 
     private var settingsCard: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack {
-                Text("Display")
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(.secondary)
-                    .frame(width: 74, alignment: .leading)
-
+        VStack(spacing: 0) {
+            settingRow(
+                icon: "display",
+                title: "Display",
+                subtitle: displaySubtitle
+            ) {
                 Picker("", selection: Binding(
                     get: { settings.selectedDisplayID },
                     set: { settings.selectedDisplayID = $0 }
@@ -163,23 +192,17 @@ struct ContentView: View {
                     }
                 }
                 .labelsHidden()
+                .frame(width: 178)
                 .disabled(state.isRecording)
             }
 
-            if let display = state.selectedDisplay {
-                Text("\(display.pixelWidth) × \(display.pixelHeight) px · 60 fps · HEVC")
-                    .font(.system(size: 10, design: .monospaced))
-                    .foregroundStyle(.tertiary)
-                    .padding(.leading, 86)
-            }
+            rowDivider
 
-            Divider()
-
-            VStack(alignment: .leading, spacing: 7) {
-                Text("Zoom on")
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(.secondary)
-
+            settingRow(
+                icon: "cursorarrow.click.2",
+                title: "Zoom on",
+                subtitle: settings.trigger.detail
+            ) {
                 Picker("", selection: $settings.trigger) {
                     ForEach(TriggerMode.allCases) { mode in
                         Text(mode.title).tag(mode)
@@ -187,73 +210,142 @@ struct ContentView: View {
                 }
                 .pickerStyle(.segmented)
                 .labelsHidden()
+                .frame(width: 190)
                 .disabled(state.isRecording)
+            }
 
-                Text(settings.trigger.detail)
-                    .font(.system(size: 10))
-                    .foregroundStyle(.tertiary)
-
-                if settings.trigger != .clicks {
-                    HStack {
-                        Text("Hotkey")
-                            .font(.system(size: 11, weight: .medium))
-                            .foregroundStyle(.secondary)
-                        Spacer()
-                        HotKeyField(combo: $settings.hotKey)
-                            .frame(width: 118, height: 30)
-                        Text("draws a zoom where the pointer is")
-                            .font(.system(size: 10))
-                            .foregroundStyle(.tertiary)
-                    }
+            if settings.trigger != .clicks {
+                rowDivider
+                settingRow(
+                    icon: "command",
+                    title: "Hotkey",
+                    subtitle: "Click the field and press a combo"
+                ) {
+                    HotKeyField(combo: $settings.hotKey)
+                        .frame(width: 112, height: 28)
                 }
             }
 
-            Divider()
+            rowDivider
 
-            HStack(spacing: 10) {
-                Text("Zoom")
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(.secondary)
-                Slider(value: $settings.zoom, in: 1.3...3.0, step: 0.1)
-                Text(String(format: "%.1f×", settings.zoom))
-                    .font(.system(size: 11, weight: .semibold, design: .monospaced))
-                    .foregroundStyle(.secondary)
-                    .frame(width: 36, alignment: .trailing)
+            settingRow(
+                icon: "plus.magnifyingglass",
+                title: "Zoom strength",
+                subtitle: "How close the camera gets"
+            ) {
+                HStack(spacing: 8) {
+                    Slider(value: $settings.zoom, in: 1.3...3.0, step: 0.1)
+                        .frame(width: 128)
+                    Text(String(format: "%.1f×", settings.zoom))
+                        .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 34, alignment: .trailing)
+                }
             }
 
-            Divider()
+            rowDivider
 
-            HStack(spacing: 14) {
-                Toggle("System audio", isOn: $settings.systemAudio)
-                    .toggleStyle(.checkbox)
-                    .font(.system(size: 11))
-                Toggle("Microphone", isOn: $settings.microphone)
-                    .toggleStyle(.checkbox)
-                    .font(.system(size: 11))
-                    .help("Voiceover track, mixed with system audio")
-                Toggle("Floating controls", isOn: $settings.showHUD)
-                    .toggleStyle(.checkbox)
-                    .font(.system(size: 11))
-                Spacer(minLength: 0)
+            settingRow(
+                icon: "speaker.wave.2",
+                title: "System audio",
+                subtitle: "App sound and music"
+            ) {
+                Toggle("", isOn: $settings.systemAudio)
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
+            }
+
+            rowDivider
+
+            settingRow(
+                icon: "mic",
+                title: "Microphone",
+                subtitle: "Voiceover track, mixed on export"
+            ) {
+                Toggle("", isOn: $settings.microphone)
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
+            }
+
+            rowDivider
+
+            settingRow(
+                icon: "rectangle.on.rectangle",
+                title: "Floating controls",
+                subtitle: "Never appears in the recording"
+            ) {
+                Toggle("", isOn: $settings.showHUD)
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
             }
         }
-        .padding(14)
-        .background(cardBackground)
+        .padding(.vertical, 4)
+        .background(card)
+    }
+
+    private var displaySubtitle: String {
+        guard let display = state.selectedDisplay else { return "No display" }
+        return "\(display.pixelWidth) × \(display.pixelHeight) px · 60 fps · HEVC"
+    }
+
+    private var rowDivider: some View {
+        Divider()
+            .opacity(0.5)
+            .padding(.leading, 52)
+    }
+
+    private func settingRow<Content: View>(
+        icon: String,
+        title: String,
+        subtitle: String,
+        @ViewBuilder control: () -> Content
+    ) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(.secondary)
+                .frame(width: 26, height: 26)
+                .background(
+                    RoundedRectangle(cornerRadius: 7, style: .continuous)
+                        .fill(Color.primary.opacity(0.06))
+                )
+
+            VStack(alignment: .leading, spacing: 1) {
+                Text(title)
+                    .font(.system(size: 12, weight: .medium))
+                Text(subtitle)
+                    .font(.system(size: 10))
+                    .foregroundStyle(.tertiary)
+                    .lineLimit(1)
+            }
+
+            Spacer(minLength: 8)
+            control()
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 8)
     }
 
     private var permissionBanner: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 11) {
             Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 13))
                 .foregroundStyle(.orange)
+
             VStack(alignment: .leading, spacing: 1) {
                 Text("Screen Recording is off")
                     .font(.system(size: 11, weight: .semibold))
-                Text("If the toggle is already on, macOS lost the grant after a rebuild — reset it.")
+                Text("If the toggle looks on, macOS lost the grant after a rebuild — reset it.")
                     .font(.system(size: 10))
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            Spacer()
+
+            Spacer(minLength: 6)
+
             Button("Fix") {
                 state.resetPermissions()
                 state.openScreenRecordingSettings()
@@ -261,14 +353,14 @@ struct ContentView: View {
             .controlSize(.small)
             .help("Reset the stale permission, then reopen Panto")
         }
-        .padding(12)
+        .padding(11)
         .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .fill(Color.orange.opacity(0.10))
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .strokeBorder(Color.orange.opacity(0.25))
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .strokeBorder(Color.orange.opacity(0.22))
         )
     }
 
@@ -296,24 +388,13 @@ struct ContentView: View {
 
             Spacer()
 
-            Text("MIT · free forever")
+            Text("MIT · v0.4")
                 .font(.system(size: 10))
                 .foregroundStyle(.tertiary)
         }
         .padding(.horizontal, 18)
+        .padding(.top, 10)
         .padding(.bottom, 14)
-        .padding(.top, 2)
-    }
-
-    // MARK: - Helpers
-
-    private var cardBackground: some View {
-        RoundedRectangle(cornerRadius: 14, style: .continuous)
-            .fill(Color(nsColor: .controlBackgroundColor))
-            .overlay(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .strokeBorder(Color.primary.opacity(0.06))
-            )
     }
 
     private func timecode(_ interval: TimeInterval) -> String {
