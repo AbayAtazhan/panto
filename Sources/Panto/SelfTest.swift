@@ -261,7 +261,7 @@ enum SelfTest {
         print("• shots: \(shots.map { String(format: "%.2f–%.2f @ (%.2f, %.2f)", $0.start, $0.end, $0.x, $0.y) })")
 
         print("• rendering zoom…")
-        let output = try await Renderer.render(input: raw, events: events, zoom: 2.0)
+        let output = try await Renderer.render(input: raw, shots: shots, zoom: 2.0)
         print("• output: \(output.path)")
 
         let frames = directory.appendingPathComponent("frames", isDirectory: true)

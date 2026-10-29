@@ -6,7 +6,7 @@ Ten days, one shot. Everything below is copy-paste ready. Replace `USER` with yo
 
 - [ ] Repo public, README first screen = GIF, MIT license, 3 screenshots.
 - [ ] `brew install --cask` cask submitted (Casks/panto.rb, fill the sha256 after the release).
-- [ ] Release `v0.1.0` with `Panto-0.1.0.zip` + notes ("first public build, video only").
+- [ ] Release `v0.2.0` with `Panto-0.2.0.zip` + notes ("first public build, video only").
 - [ ] Pin an issue: "What should Panto do next?" with 5 options.
 
 ## Day 1 — Hacker News (Tuesday–Thursday, 08:00–10:00 ET)

@@ -1,7 +1,7 @@
 # Panto
 
 **Auto-zoom for your screen recordings.** Free, open source, native macOS.
-Every click becomes a camera move, so a boring demo turns into something people actually watch.
+Every click — or every press of your own hotkey — becomes a camera move.
 
 ![Panto demo](docs/demo.gif)
 
@@ -11,20 +11,26 @@ Every click becomes a camera move, so a boring demo turns into something people 
 <img alt="MIT" src="https://img.shields.io/badge/license-MIT-blue">
 </p>
 
-Screen Studio costs $89. Panto is a small native app that does the one thing most people
-open Screen Studio for: smooth zooms on the parts of the screen that matter.
+Screen Studio costs $89. Panto does the part people actually use — smooth zooms on the
+parts of the screen that matter — and gives you a timeline to fix anything the automation missed.
 
 ## What it does
 
-- **Records any display** with ScreenCaptureKit, 60 fps, cursor included.
-- **Tracks your clicks** and puts a smooth, clamped camera move on each one.
-- **Exports an mp4** next to the raw `.mov` — drop it into a tweet, a README or a demo.
+- **Records any display at native resolution** — no downscaling, no soft text. HEVC, ~0.12 bits
+  per pixel per frame (≈40 Mbps on a 14" MacBook Pro), 60 fps.
+- **Captures system audio** together with the screen, 48 kHz stereo.
+- **Zooms three ways**: on clicks, on your own global hotkey (default `⌥⌘Z`), or both.
+- **Floating REC bar** with a Zoom button and a Stop button. The app is excluded from the
+  capture, so the bar never shows up in the video.
+- **Timeline editor**: drag zoom bars, click the preview to place a zoom exactly where you want,
+  delete shots, change the zoom strength, export again.
+- **Writes an H.264 mp4** next to the raw `.mov`. Nothing is uploaded anywhere.
 
-No account, no telemetry, no Electron, no 200 MB of Chromium.
+No account, no telemetry, no Electron, no subscription.
 
 ## Install
 
-Build from source (Xcode Command Line Tools are enough — a full Xcode install is not required):
+Xcode Command Line Tools are enough — a full Xcode install is not required:
 
 ```sh
 git clone https://github.com/USER/panto.git
@@ -33,63 +39,72 @@ cd panto
 open build/Panto.app
 ```
 
-Then grant **Screen Recording** in System Settings → Privacy & Security, and **quit and reopen**
-Panto (macOS only applies the permission on the next launch). Accessibility is optional:
-with it, Panto zooms on clicks; without it, Panto zooms wherever your pointer rests.
+Grant **Screen Recording** in System Settings → Privacy & Security, then **quit and reopen**
+Panto (macOS only applies the permission on the next launch). System audio comes with the same
+permission. Accessibility is optional: with it Panto zooms on clicks; without it, clicks are
+ignored and you zoom with the hotkey / floating button.
 
 ## Use
 
-1. Pick a display, pick a zoom level.
-2. Hit the big red button. The window hides itself, recording starts.
-3. Click around. Stop from the menu bar.
-4. Panto writes `~/Movies/Panto/Panto <date>.mov` and `<date> (zoom).mp4`, then reveals it in Finder.
+1. Pick a display, pick how zooms are triggered (clicks, hotkey, both).
+2. Hit the red button. The window hides, the floating bar appears.
+3. Work. Press `⌥⌘Z` (or the **Zoom** button) whenever the camera should move.
+4. Stop. The editor opens with your zooms already on the timeline.
+5. Click the preview to add a zoom at the playhead, drag a bar to move it, **Export**.
+
+Files land in `~/Movies/Panto/` — the raw `.mov` is always kept.
 
 ## How it works
 
 ```
-ScreenCaptureKit ──► AVAssetWriter (.mov)
+ScreenCaptureKit ──► AVAssetWriter (HEVC .mov, native pixels)
+        │                └── audio stream ──► AAC 48 kHz
         │
-        └──► click timeline (CGEvent tap, or pointer-dwell fallback)
+        ├──► click timeline (CGEvent tap, or pointer-dwell fallback)
+        └──► manual zooms (Carbon hotkey / floating HUD)
+                     │
+                     ▼
+        Timeline editor (drag, add, delete)
                      │
                      ▼
         AVMutableVideoComposition: per-frame affine camera
-        (scale from the click timeline, center clamped to the frame,
+        (scale from the shots, center clamped to the frame,
          pan smoothed with an exponential filter)
                      │
                      ▼
               AVAssetExportSession ──► .mp4
 ```
 
-The zoom is applied **after** recording, not live: that is why the camera can be smooth,
-why it never shows black bars, and why the raw file is always kept.
+The zoom is baked in **after** recording, not live. That is what makes the camera smooth,
+keeps it inside the frame, and lets you edit every move before exporting.
 
 ## Roadmap
 
-- [ ] System audio + microphone
-- [ ] Manual zoom timeline (drag the camera, delete a shot)
+- [ ] Microphone track (voiceover) mixed with system audio
 - [ ] Cursor smoothing and click highlight styles
-- [ ] 4K/60 hardware export (HEVC)
-- [ ] Global hotkey
-- [ ] Signed and notarized releases
+- [ ] Manual zoom strength per shot
+- [ ] Record multiple displays at once
+- [ ] Signed and notarized builds
+- [ ] Global "pause recording" hotkey
 
 ## Known limits
 
 - macOS 15+ only (ScreenCaptureKit).
-- No audio yet — this is a video-only MVP.
+- No microphone yet — system audio only.
 - Release builds are ad-hoc signed until the project has a Developer ID. First launch:
   right-click → Open, or `xattr -dr com.apple.quarantine /Applications/Panto.app`.
-- Auto-zoom is click-driven; it does not try to understand what is on screen.
+- The camera follows clicks/hotkeys; it does not understand what is on screen.
 
 ## Development
 
 ```sh
-swift build -c release          # build the binary
-./scripts/make_app.sh           # build Panto.app + icon + ad-hoc signature
-./.build/release/Panto --selftest   # synthetic recording → zoom → frames (no permissions needed)
+swift build -c release                # build the binary
+./scripts/make_app.sh                 # build Panto.app + icon + ad-hoc signature
+./.build/release/Panto --selftest     # synthetic recording → zoom → PNG frames
 ```
 
-`--selftest` renders a fake landing page, applies the camera move and dumps PNG frames.
-It is the fastest way to check a change to the zoom math without recording anything.
+`--selftest` renders a fake landing page, applies the camera move and dumps frames — the fastest
+way to check a change to the zoom math without recording anything or granting permissions.
 
 ## License
 

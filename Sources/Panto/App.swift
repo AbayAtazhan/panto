@@ -1,15 +1,23 @@
-import SwiftUI
 import AppKit
+import SwiftUI
 
 struct PantoApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
-    @StateObject private var state = AppState()
+
+    @StateObject private var settings: AppSettings
+    @StateObject private var state: AppState
+
+    init() {
+        let settings = AppSettings()
+        _settings = StateObject(wrappedValue: settings)
+        _state = StateObject(wrappedValue: AppState(settings: settings))
+    }
 
     var body: some Scene {
         WindowGroup("Panto") {
             ContentView()
                 .environmentObject(state)
-                .onAppear { state.refreshEnvironment() }
+                .environmentObject(settings)
         }
         .windowResizability(.contentSize)
         .commands {
@@ -38,7 +46,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         if !flag {
-            sender.windows.first?.makeKeyAndOrderFront(nil)
+            sender.windows.first(where: { $0.canBecomeKey })?.makeKeyAndOrderFront(nil)
         }
         return true
     }

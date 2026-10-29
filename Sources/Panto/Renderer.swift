@@ -16,9 +16,10 @@ enum RendererError: LocalizedError {
 }
 
 enum Renderer {
-    /// Applies the auto-zoom camera move to a raw recording and writes an mp4 next to it.
-    static func render(input: URL, events: [ZoomEvent], zoom: CGFloat) async throws -> URL {
-        guard !events.isEmpty else { return input }
+    /// Applies the camera move to a raw recording and writes an mp4 next to it.
+    /// Audio tracks from the recording are carried over and mixed.
+    static func render(input: URL, shots: [ZoomShot], zoom: CGFloat) async throws -> URL {
+        guard !shots.isEmpty else { return input }
 
         let asset = AVURLAsset(url: input)
         guard let source = try await asset.loadTracks(withMediaType: .video).first else {
@@ -46,7 +47,20 @@ enum Renderer {
         }
         try track.insertTimeRange(CMTimeRange(start: .zero, duration: duration), of: source, at: .zero)
 
-        let shots = ZoomMath.shots(from: events)
+        // Keep every audio track (system audio, and later microphone) in sync.
+        var audioParameters: [AVMutableAudioMixInputParameters] = []
+        let audioTracks = try await asset.loadTracks(withMediaType: .audio)
+        for sourceAudio in audioTracks {
+            guard let audioTrack = composition.addMutableTrack(
+                withMediaType: .audio,
+                preferredTrackID: kCMPersistentTrackID_Invalid
+            ) else { continue }
+            let range = try await sourceAudio.load(.timeRange)
+            try audioTrack.insertTimeRange(range, of: sourceAudio, at: range.start)
+            let parameters = AVMutableAudioMixInputParameters(track: audioTrack)
+            parameters.setVolume(1.0, at: .zero)
+            audioParameters.append(parameters)
+        }
 
         let videoComposition = AVMutableVideoComposition()
         videoComposition.renderSize = renderSize
@@ -59,7 +73,7 @@ enum Renderer {
         var lastTransform = CGAffineTransform.identity
         var time = 0.0
 
-        // A little camera model: the scale comes from the click timeline, the center
+        // A little camera model: the scale comes from the shot timeline, the center
         // is clamped so the frame never shows black bars, and the pan is smoothed.
         var camera = CGPoint(x: renderSize.width / 2, y: renderSize.height / 2)
         let step = 1.0 / 30.0
@@ -113,6 +127,11 @@ enum Renderer {
         session.outputURL = output
         session.outputFileType = .mp4
         session.shouldOptimizeForNetworkUse = true
+        if !audioParameters.isEmpty {
+            let mix = AVMutableAudioMix()
+            mix.inputParameters = audioParameters
+            session.audioMix = mix
+        }
 
         await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
             session.exportAsynchronously { continuation.resume() }
