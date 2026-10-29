@@ -36,6 +36,11 @@ final class HotKeyCenter {
     }
 
     func register(_ combo: HotKeyCombo) {
+        // Never register a modifier-less key: it would steal that key from every app.
+        guard combo.modifiers != 0 else {
+            unregister()
+            return
+        }
         if registered == combo, hotKeyRef != nil { return }
         unregister()
         var ref: EventHotKeyRef?
@@ -87,6 +92,7 @@ final class HotKeyRecorderView: NSView {
     }
 
     private var isRecording = false
+    private var warning: String?
     private var isHovering = false
 
     override var acceptsFirstResponder: Bool { true }
@@ -100,7 +106,7 @@ final class HotKeyRecorderView: NSView {
         path.lineWidth = 1
         path.stroke()
 
-        let text = isRecording ? "Press keys…" : combo.label
+        let text = warning ?? (isRecording ? "Press keys…" : combo.label)
         let attributes: [NSAttributedString.Key: Any] = [
             .font: NSFont.monospacedSystemFont(ofSize: 12, weight: .semibold),
             .foregroundColor: isRecording ? NSColor.controlAccentColor : NSColor.labelColor
@@ -130,6 +136,19 @@ final class HotKeyRecorderView: NSView {
         let isModifierOnly = [.command, .option, .control, .shift].contains(where: { flags.contains($0) })
             && event.charactersIgnoringModifiers?.isEmpty != false
         if isModifierOnly { return }
+
+        // A bare key would be swallowed system-wide: always require ⌘/⌥/⌃.
+        let hasModifier = flags.contains(.command) || flags.contains(.option) || flags.contains(.control)
+        guard hasModifier else {
+            warning = "Add ⌘, ⌥ or ⌃"
+            NSSound.beep()
+            needsDisplay = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) { [weak self] in
+                self?.warning = nil
+                self?.needsDisplay = true
+            }
+            return
+        }
 
         var carbon: UInt32 = 0
         if flags.contains(.command) { carbon |= UInt32(cmdKey) }

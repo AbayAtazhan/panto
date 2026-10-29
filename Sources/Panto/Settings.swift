@@ -71,6 +71,10 @@ final class AppSettings: ObservableObject {
             systemAudio = stored.systemAudio
             showHUD = stored.showHUD
             selectedDisplayID = stored.displayID
+            if hotKey.modifiers == 0 {
+                hotKey = .fallback
+                save()
+            }
         } else {
             trigger = .both
             hotKey = .fallback
