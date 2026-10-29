@@ -8,7 +8,6 @@ Every click — or every press of your own hotkey — becomes a camera move.
 <img src="docs/screenshot.png" width="420" alt="Panto window">
 
 <p>
-<img alt="CI" src="https://github.com/AbayAtazhan/panto/actions/workflows/build.yml/badge.svg">
 <img alt="Release" src="https://img.shields.io/github/v/release/AbayAtazhan/panto">
 <img alt="macOS 15+" src="https://img.shields.io/badge/macOS-15%2B-black">
 <img alt="Swift" src="https://img.shields.io/badge/Swift-6-orange">
