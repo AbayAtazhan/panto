@@ -10,7 +10,7 @@ final class ZoomCounter: ObservableObject {
 final class HUDController {
     private var panel: NSPanel?
 
-    func show(counter: ZoomCounter, onZoom: @escaping () -> Void, onStop: @escaping () -> Void) {
+    func show(counter: ZoomCounter, on screen: NSScreen?, onZoom: @escaping () -> Void, onStop: @escaping () -> Void) {
         hide()
         let view = HUDView(counter: counter, onZoom: onZoom, onStop: onStop)
         let hosting = NSHostingView(rootView: view)
@@ -34,8 +34,8 @@ final class HUDController {
         panel.contentView = hosting
         self.panel = panel
 
-        if let screen = NSScreen.main {
-            let frame = screen.visibleFrame
+        if let target = screen ?? NSScreen.main {
+            let frame = target.visibleFrame
             panel.setFrameOrigin(NSPoint(x: frame.midX - 125, y: frame.minY + 64))
         }
         panel.orderFrontRegardless()

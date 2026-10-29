@@ -134,8 +134,10 @@ final class AppState: ObservableObject {
                 hideWindow()
                 status = "Recording"
                 if settings.showHUD {
+                    let capturedScreen = NSScreen.screens.first { $0.pantoDisplayID == display.id }
                     hud.show(
                         counter: zoomCounter,
+                        on: capturedScreen,
                         onZoom: { [weak self] in self?.manualZoom() },
                         onStop: { [weak self] in self?.stop() }
                     )

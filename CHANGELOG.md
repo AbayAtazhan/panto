@@ -5,6 +5,12 @@ versioning: [SemVer](https://semver.org).
 
 ## [Unreleased]
 
+## [0.4.2] — 2026-10-30
+
+### Fixed
+- The floating recording bar now appears on the display being recorded, not on the main one.
+- A hotkey press with the pointer on another display is ignored instead of zooming to a corner.
+
 ## [0.4.1] — 2026-10-30
 
 ### Added

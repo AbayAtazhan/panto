@@ -220,6 +220,10 @@ final class Recorder: NSObject, SCStreamOutput, SCStreamDelegate {
         guard now > startHost else { return false }
         let point = NSEvent.mouseLocation
         guard screenFrame.width > 1, screenFrame.height > 1 else { return false }
+        guard screenFrame.contains(point) else {
+            Log.write("zoom: pointer is outside the captured display")
+            return false
+        }
         let x = min(max((point.x - screenFrame.minX) / screenFrame.width, 0), 1)
         let y = min(max((screenFrame.maxY - point.y) / screenFrame.height, 0), 1)
         let event = ZoomEvent(t: now - startHost, x: x, y: y)
