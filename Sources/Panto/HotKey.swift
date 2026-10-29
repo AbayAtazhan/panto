@@ -12,7 +12,14 @@ final class HotKeyCenter {
     private var handlerRef: EventHandlerRef?
     private var registered: HotKeyCombo?
 
-    private init() {
+    private init() {}
+
+    /// Carbon needs the app's event target, which only exists once NSApplication
+    /// is up. Install lazily and retry: doing it in `init` can silently fail and
+    /// leave the hotkey registered without a handler (the key then just beeps).
+    @discardableResult
+    private func installHandlerIfNeeded() -> Bool {
+        if handlerRef != nil { return true }
         var eventType = EventTypeSpec(
             eventClass: OSType(kEventClassKeyboard),
             eventKind: UInt32(kEventHotKeyPressed)
@@ -21,11 +28,12 @@ final class HotKeyCenter {
             guard let userData else { return noErr }
             let center = Unmanaged<HotKeyCenter>.fromOpaque(userData).takeUnretainedValue()
             DispatchQueue.main.async {
+                Log.write("hotkey: pressed")
                 center.onPress?()
             }
             return noErr
         }
-        InstallEventHandler(
+        let status = InstallEventHandler(
             GetApplicationEventTarget(),
             callback,
             1,
@@ -33,6 +41,12 @@ final class HotKeyCenter {
             Unmanaged.passUnretained(self).toOpaque(),
             &handlerRef
         )
+        Log.write("hotkey: install handler status=\(status)")
+        if status != noErr {
+            handlerRef = nil
+            return false
+        }
+        return true
     }
 
     func register(_ combo: HotKeyCombo) {
@@ -43,6 +57,12 @@ final class HotKeyCenter {
         }
         if registered == combo, hotKeyRef != nil { return }
         unregister()
+
+        guard installHandlerIfNeeded() else {
+            Log.write("hotkey: handler unavailable, not registering")
+            return
+        }
+
         var ref: EventHotKeyRef?
         let identifier = EventHotKeyID(signature: OSType(0x50414E54), id: 1) // 'PANT'
         let status = RegisterEventHotKey(
@@ -53,6 +73,7 @@ final class HotKeyCenter {
             0,
             &ref
         )
+        Log.write("hotkey: register \(combo.label) status=\(status)")
         if status == noErr {
             hotKeyRef = ref
             registered = combo

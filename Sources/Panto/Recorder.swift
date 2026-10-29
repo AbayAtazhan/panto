@@ -206,18 +206,26 @@ final class Recorder: NSObject, SCStreamOutput, SCStreamDelegate {
         }
     }
 
-    /// Called by the hotkey or the floating HUD.
-    func addManualZoom() {
+    /// Called by the hotkey or the floating HUD. Returns false when the press
+    /// arrived before the first video frame.
+    @discardableResult
+    func addManualZoom() -> Bool {
         lock.lock()
         defer { lock.unlock() }
-        guard stream != nil, startHost > 0 else { return }
+        guard stream != nil, startHost > 0 else {
+            Log.write("zoom: ignored (stream=\(stream != nil), startHost=\(startHost))")
+            return false
+        }
         let now = CACurrentMediaTime()
-        guard now > startHost else { return }
+        guard now > startHost else { return false }
         let point = NSEvent.mouseLocation
-        guard screenFrame.width > 1, screenFrame.height > 1 else { return }
+        guard screenFrame.width > 1, screenFrame.height > 1 else { return false }
         let x = min(max((point.x - screenFrame.minX) / screenFrame.width, 0), 1)
         let y = min(max((screenFrame.maxY - point.y) / screenFrame.height, 0), 1)
-        manualEvents.append(ZoomEvent(t: now - startHost, x: x, y: y))
+        let event = ZoomEvent(t: now - startHost, x: x, y: y)
+        manualEvents.append(event)
+        Log.write(String(format: "zoom: manual at %.2fs (%.2f, %.2f)", event.t, x, y))
+        return true
     }
 
     func stop() async throws -> Result {
@@ -259,10 +267,20 @@ final class Recorder: NSObject, SCStreamOutput, SCStreamDelegate {
         manualEvents = []
         lock.unlock()
 
-        let manualShots = manual.map {
-            ZoomShot(start: max(0, $0.t - 0.05), end: $0.t + 1.9, x: $0.x, y: $0.y)
+        let manualShots = manual.compactMap { event -> ZoomShot? in
+            guard event.t >= 0, event.t <= duration else {
+                Log.write(String(format: "zoom: dropped manual event at %.2fs (duration %.2f)", event.t, duration))
+                return nil
+            }
+            return ZoomShot(
+                start: max(0, event.t - 0.05),
+                end: min(duration, event.t + 1.9),
+                x: event.x,
+                y: event.y
+            )
         }
         let shots = (autoShots + manualShots).sorted { $0.start < $1.start }
+        Log.write("stop: duration=\(String(format: "%.2f", duration)) clicks=\(clickEvents.count) manual=\(manual.count) shots=\(shots.count)")
 
         let result = Result(
             url: url,

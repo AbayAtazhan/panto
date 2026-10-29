@@ -23,6 +23,7 @@ final class AppState: ObservableObject {
     @Published var hasScreenPermission = false
     @Published var hasAccessibility = false
     @Published var editor: EditorModel?
+    let zoomCounter = ZoomCounter()
 
     private let recorder = Recorder()
     private let hud = HUDController()
@@ -49,9 +50,11 @@ final class AppState: ObservableObject {
     }
 
     private func hotKeyPressed() {
-        guard isRecording else { return }
-        recorder.addManualZoom()
-        flash("Zoom added")
+        guard isRecording else {
+            Log.write("hotkey: press ignored, not recording")
+            return
+        }
+        manualZoom()
     }
 
     func refreshEnvironment() {
@@ -126,11 +129,13 @@ final class AppState: ObservableObject {
                 isBusy = false
                 startedAt = Date()
                 elapsed = 0
+                zoomCounter.count = 0
                 startTimer()
                 hideWindow()
                 status = "Recording"
                 if settings.showHUD {
                     hud.show(
+                        counter: zoomCounter,
                         onZoom: { [weak self] in self?.manualZoom() },
                         onStop: { [weak self] in self?.stop() }
                     )
@@ -144,9 +149,14 @@ final class AppState: ObservableObject {
     }
 
     func manualZoom() {
-        guard isRecording else { return }
-        recorder.addManualZoom()
-        flash("Zoom added")
+        guard isRecording else {
+            Log.write("zoom: request ignored, not recording")
+            return
+        }
+        if recorder.addManualZoom() {
+            zoomCounter.count += 1
+            flash("Zoom \(zoomCounter.count) added")
+        }
     }
 
     func stop() {

@@ -3,12 +3,16 @@ import SwiftUI
 
 /// Floating recording controls. The app is excluded from the capture, so this
 /// panel never ends up in the video.
+final class ZoomCounter: ObservableObject {
+    @Published var count = 0
+}
+
 final class HUDController {
     private var panel: NSPanel?
 
-    func show(onZoom: @escaping () -> Void, onStop: @escaping () -> Void) {
+    func show(counter: ZoomCounter, onZoom: @escaping () -> Void, onStop: @escaping () -> Void) {
         hide()
-        let view = HUDView(onZoom: onZoom, onStop: onStop)
+        let view = HUDView(counter: counter, onZoom: onZoom, onStop: onStop)
         let hosting = NSHostingView(rootView: view)
         hosting.frame = NSRect(x: 0, y: 0, width: 250, height: 54)
 
@@ -44,6 +48,7 @@ final class HUDController {
 }
 
 private struct HUDView: View {
+    @ObservedObject var counter: ZoomCounter
     let onZoom: () -> Void
     let onStop: () -> Void
 
@@ -56,6 +61,14 @@ private struct HUDView: View {
                 Text("REC")
                     .font(.system(size: 10, weight: .heavy, design: .monospaced))
                     .foregroundStyle(.white.opacity(0.85))
+                if counter.count > 0 {
+                    Text("\(counter.count)")
+                        .font(.system(size: 9, weight: .bold, design: .rounded))
+                        .padding(.horizontal, 5)
+                        .padding(.vertical, 1)
+                        .background(Capsule().fill(Color.orange))
+                        .foregroundStyle(.black)
+                }
             }
 
             Divider().frame(height: 20)
