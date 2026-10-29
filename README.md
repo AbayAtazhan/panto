@@ -18,7 +18,8 @@ parts of the screen that matter — and gives you a timeline to fix anything the
 
 - **Records any display at native resolution** — no downscaling, no soft text. HEVC, ~0.12 bits
   per pixel per frame (≈40 Mbps on a 14" MacBook Pro), 60 fps.
-- **Captures system audio** together with the screen, 48 kHz stereo.
+- **Records system audio and your microphone** as separate tracks, mixed on export —
+  narrate the demo without losing the app's sound.
 - **Zooms three ways**: on clicks, on your own global hotkey (default `⌥⌘Z`), or both.
 - **Floating REC bar** with a Zoom button and a Stop button. The app is excluded from the
   capture, so the bar never shows up in the video.
@@ -30,7 +31,21 @@ No account, no telemetry, no Electron, no subscription.
 
 ## Install
 
-Xcode Command Line Tools are enough — a full Xcode install is not required:
+**Download** the latest `Panto.dmg` from [Releases](../../releases/latest) and drag it into
+Applications. Or let the installer handle everything:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/USER/panto/main/install.sh | bash
+```
+
+Panto is not notarized yet, so macOS will refuse the first launch with *"Apple cannot check it
+for malicious software"*. The installer clears the quarantine flag; for a manual install run:
+
+```sh
+xattr -dr com.apple.quarantine /Applications/Panto.app
+```
+
+**From source** — Xcode Command Line Tools are enough, a full Xcode install is not required:
 
 ```sh
 git clone https://github.com/USER/panto.git
@@ -40,9 +55,9 @@ open build/Panto.app
 ```
 
 Grant **Screen Recording** in System Settings → Privacy & Security, then **quit and reopen**
-Panto (macOS only applies the permission on the next launch). System audio comes with the same
-permission. Accessibility is optional: with it Panto zooms on clicks; without it, clicks are
-ignored and you zoom with the hotkey / floating button.
+Panto (macOS only applies the permission on the next launch). The microphone asks separately on
+the first recording that has voiceover enabled. Accessibility is optional: with it Panto zooms on
+clicks; without it, clicks are ignored and you zoom with the hotkey / floating button.
 
 ## Use
 
@@ -80,11 +95,10 @@ keeps it inside the frame, and lets you edit every move before exporting.
 
 ## Roadmap
 
-- [ ] Microphone track (voiceover) mixed with system audio
 - [ ] Cursor smoothing and click highlight styles
 - [ ] Manual zoom strength per shot
 - [ ] Record multiple displays at once
-- [ ] Signed and notarized builds
+- [ ] Signed and notarized builds (Developer ID)
 - [ ] Global "pause recording" hotkey
 
 ## Known limits

@@ -6,6 +6,7 @@ final class Recorder: NSObject, SCStreamOutput, SCStreamDelegate {
     struct Options {
         var displayID: CGDirectDisplayID
         var systemAudio: Bool
+        var microphone: Bool
         var trigger: TriggerMode
     }
 
@@ -14,6 +15,7 @@ final class Recorder: NSObject, SCStreamOutput, SCStreamDelegate {
         let shots: [ZoomShot]
         let duration: Double
         let hasSystemAudio: Bool
+        let hasMicrophone: Bool
         let width: Int
         let height: Int
     }
@@ -42,6 +44,8 @@ final class Recorder: NSObject, SCStreamOutput, SCStreamDelegate {
     private var writer: AVAssetWriter?
     private var videoInput: AVAssetWriterInput?
     private var audioInput: AVAssetWriterInput?
+    private var micInput: AVAssetWriterInput?
+    private var microphone: MicrophoneCapture?
     private var adaptor: AVAssetWriterInputPixelBufferAdaptor?
     private var outputURL: URL?
     private var firstPTS: CMTime?
@@ -54,6 +58,7 @@ final class Recorder: NSObject, SCStreamOutput, SCStreamDelegate {
     private var captureWidth = 0
     private var captureHeight = 0
     private var hasAudio = false
+    private var hasMic = false
 
     var isRecording: Bool { stream != nil }
 
@@ -110,6 +115,22 @@ final class Recorder: NSObject, SCStreamOutput, SCStreamDelegate {
         )
         writer.add(input)
 
+        var micTrack: AVAssetWriterInput?
+        if options.microphone {
+            let micSettings: [String: Any] = [
+                AVFormatIDKey: kAudioFormatMPEG4AAC,
+                AVSampleRateKey: 48_000,
+                AVNumberOfChannelsKey: 1,
+                AVEncoderBitRateKey: 128_000
+            ]
+            let input = AVAssetWriterInput(mediaType: .audio, outputSettings: micSettings)
+            input.expectsMediaDataInRealTime = true
+            if writer.canAdd(input) {
+                writer.add(input)
+                micTrack = input
+            }
+        }
+
         var audio: AVAssetWriterInput?
         if options.systemAudio {
             let audioSettings: [String: Any] = [
@@ -144,6 +165,7 @@ final class Recorder: NSObject, SCStreamOutput, SCStreamDelegate {
         self.writer = writer
         self.videoInput = input
         self.audioInput = audio
+        self.micInput = micTrack
         self.adaptor = adaptor
         self.outputURL = url
         self.stream = stream
@@ -152,6 +174,7 @@ final class Recorder: NSObject, SCStreamOutput, SCStreamDelegate {
         self.sessionStarted = false
         self.startHost = 0
         self.hasAudio = options.systemAudio
+        self.hasMic = micTrack != nil
         self.manualEvents = []
 
         if options.trigger != .hotkey {
@@ -160,9 +183,23 @@ final class Recorder: NSObject, SCStreamOutput, SCStreamDelegate {
             self.tracker = tracker
         }
 
+        if options.microphone {
+            let mic = MicrophoneCapture()
+            mic.onSample = { [weak self] sample in
+                guard let self else { return }
+                self.videoQueue.async {
+                    self.appendMicrophone(sample)
+                }
+            }
+            try? mic.start()
+            self.microphone = mic
+        }
+
         do {
             try await stream.startCapture()
         } catch {
+            microphone?.stop()
+            microphone = nil
             self.stream = nil
             self.writer = nil
             throw RecorderError.captureFailed(error.localizedDescription)
@@ -195,8 +232,12 @@ final class Recorder: NSObject, SCStreamOutput, SCStreamDelegate {
         let clickEvents = tracker?.rawEvents() ?? []
         tracker = nil
 
+        microphone?.stop()
+        microphone = nil
+
         input.markAsFinished()
         audioInput?.markAsFinished()
+        micInput?.markAsFinished()
         await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
             writer.finishWriting { continuation.resume() }
         }
@@ -228,6 +269,7 @@ final class Recorder: NSObject, SCStreamOutput, SCStreamDelegate {
             shots: shots,
             duration: duration,
             hasSystemAudio: hasAudio,
+            hasMicrophone: hasMic,
             width: captureWidth,
             height: captureHeight
         )
@@ -235,6 +277,7 @@ final class Recorder: NSObject, SCStreamOutput, SCStreamDelegate {
         self.writer = nil
         self.videoInput = nil
         self.audioInput = nil
+        self.micInput = nil
         self.adaptor = nil
         self.outputURL = nil
         self.firstPTS = nil
@@ -271,6 +314,11 @@ final class Recorder: NSObject, SCStreamOutput, SCStreamDelegate {
         lastPTS = pts
         guard input.isReadyForMoreMediaData, let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
         adaptor.append(pixelBuffer, withPresentationTime: pts)
+    }
+
+    private func appendMicrophone(_ sampleBuffer: CMSampleBuffer) {
+        guard sessionStarted, let micInput, micInput.isReadyForMoreMediaData else { return }
+        micInput.append(sampleBuffer)
     }
 
     func stream(_ stream: SCStream, didStopWithError error: Error) {

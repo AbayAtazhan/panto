@@ -223,14 +223,18 @@ struct ContentView: View {
 
             Divider()
 
-            HStack(spacing: 18) {
+            HStack(spacing: 14) {
                 Toggle("System audio", isOn: $settings.systemAudio)
                     .toggleStyle(.checkbox)
                     .font(.system(size: 11))
+                Toggle("Microphone", isOn: $settings.microphone)
+                    .toggleStyle(.checkbox)
+                    .font(.system(size: 11))
+                    .help("Voiceover track, mixed with system audio")
                 Toggle("Floating controls", isOn: $settings.showHUD)
                     .toggleStyle(.checkbox)
                     .font(.system(size: 11))
-                Spacer()
+                Spacer(minLength: 0)
             }
         }
         .padding(14)

@@ -1,3 +1,4 @@
+import AVFoundation
 import AppKit
 import Combine
 import SwiftUI
@@ -107,10 +108,18 @@ final class AppState: ObservableObject {
         status = "Starting…"
         isBusy = true
         Task {
+            var useMicrophone = settings.microphone
+            if useMicrophone {
+                useMicrophone = await requestMicrophonePermission()
+                if !useMicrophone {
+                    status = "Microphone denied — recording without voiceover."
+                }
+            }
             do {
                 try await recorder.start(options: Recorder.Options(
                     displayID: display.id,
                     systemAudio: settings.systemAudio,
+                    microphone: useMicrophone,
                     trigger: settings.trigger
                 ))
                 isRecording = true
@@ -192,6 +201,21 @@ final class AppState: ObservableObject {
 
     func hideWindow() {
         NSApp.windows.filter { $0.canBecomeKey }.forEach { $0.orderOut(nil) }
+    }
+
+    private func requestMicrophonePermission() async -> Bool {
+        switch AVCaptureDevice.authorizationStatus(for: .audio) {
+        case .authorized:
+            return true
+        case .notDetermined:
+            return await withCheckedContinuation { continuation in
+                AVCaptureDevice.requestAccess(for: .audio) { granted in
+                    continuation.resume(returning: granted)
+                }
+            }
+        default:
+            return false
+        }
     }
 
     func requestScreenPermission() {

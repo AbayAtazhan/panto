@@ -52,6 +52,9 @@ final class AppSettings: ObservableObject {
     @Published var systemAudio: Bool {
         didSet { save() }
     }
+    @Published var microphone: Bool {
+        didSet { save() }
+    }
     @Published var showHUD: Bool {
         didSet { save() }
     }
@@ -69,6 +72,7 @@ final class AppSettings: ObservableObject {
             hotKey = HotKeyCombo(keyCode: stored.keyCode, modifiers: stored.modifiers, label: stored.label)
             zoom = stored.zoom
             systemAudio = stored.systemAudio
+            microphone = stored.microphone ?? true
             showHUD = stored.showHUD
             selectedDisplayID = stored.displayID
             if hotKey.modifiers == 0 {
@@ -80,6 +84,7 @@ final class AppSettings: ObservableObject {
             hotKey = .fallback
             zoom = 2.0
             systemAudio = true
+            microphone = true
             showHUD = true
             selectedDisplayID = nil
         }
@@ -92,6 +97,7 @@ final class AppSettings: ObservableObject {
         var label: String
         var zoom: Double
         var systemAudio: Bool
+        var microphone: Bool?
         var showHUD: Bool
         var displayID: CGDirectDisplayID?
     }
@@ -104,6 +110,7 @@ final class AppSettings: ObservableObject {
             label: hotKey.label,
             zoom: zoom,
             systemAudio: systemAudio,
+            microphone: microphone,
             showHUD: showHUD,
             displayID: selectedDisplayID
         )
