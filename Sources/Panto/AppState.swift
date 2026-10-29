@@ -205,6 +205,24 @@ final class AppState: ObservableObject {
         }
     }
 
+    /// Ad-hoc builds get a new code hash on every rebuild, and macOS keys the
+    /// screen-recording grant to that hash. Resetting clears the stale entry so the
+    /// system prompt can appear again.
+    func resetPermissions() {
+        let bundleID = Bundle.main.bundleIdentifier ?? "app.panto.recorder"
+        for service in ["ScreenCapture", "Accessibility", "Microphone"] {
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: "/usr/bin/tccutil")
+            process.arguments = ["reset", service, bundleID]
+            process.standardOutput = FileHandle.nullDevice
+            process.standardError = FileHandle.nullDevice
+            try? process.run()
+            process.waitUntilExit()
+        }
+        hasScreenPermission = false
+        status = "Permission reset — quit Panto, open it again, then allow screen recording."
+    }
+
     func openScreenRecordingSettings() {
         if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture") {
             NSWorkspace.shared.open(url)

@@ -95,6 +95,26 @@ keeps it inside the frame, and lets you edit every move before exporting.
   right-click → Open, or `xattr -dr com.apple.quarantine /Applications/Panto.app`.
 - The camera follows clicks/hotkeys; it does not understand what is on screen.
 
+## Troubleshooting
+
+**"I allowed Screen Recording, but Panto still says it is off."**
+
+Local builds are ad-hoc signed. macOS stores the Screen Recording grant against the binary's
+**code hash**, and every rebuild produces a new hash — so the grant ends up attached to a binary
+that no longer exists. The System Settings toggle may still look enabled while capture is denied
+(the system log says `Failed to match existing code requirement ... kTCCServiceScreenCapture`).
+
+Panto detects this: `make_app.sh` clears the stale entry when the hash changes, and the app shows
+a **Fix** button. To recover:
+
+1. Press Record → the system asks again → **Open System Settings** → enable Panto.
+2. Quit Panto and open it again (macOS applies the grant on the next launch).
+3. Still stuck? Run `./scripts/reset_permissions.sh`, then repeat.
+
+System audio is covered by the same permission (macOS calls it "Screen & System Audio Recording").
+For a grant that survives rebuilds, sign with a Developer ID or a trusted self-signed certificate —
+`PANTO_SIGN_ID="Your Identity" ./scripts/make_app.sh` is the hook for that.
+
 ## Development
 
 ```sh

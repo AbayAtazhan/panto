@@ -41,4 +41,16 @@ iconutil -c icns "$ICONSET" -o "$APP/Contents/Resources/AppIcon.icns"
 echo "▸ signing (ad-hoc)"
 codesign --force --deep --sign - "$APP"
 
+# macOS ties Screen Recording to the binary's code hash. Ad-hoc builds get a new
+# hash on every rebuild, which silently invalidates the old grant. Detect it and
+# clear the stale entry so the system prompt can appear again.
+NEW_HASH=$(codesign -dv --verbose=4 "$APP" 2>&1 | awk -F= '/^CDHash=/{print $2}')
+STATE="$ROOT/build/.last-cdhash"
+if [ -f "$STATE" ] && [ "$(cat "$STATE")" != "$NEW_HASH" ]; then
+    echo "▸ binary changed → resetting stale screen-recording permission"
+    tccutil reset ScreenCapture app.panto.recorder >/dev/null 2>&1 || true
+    tccutil reset Microphone app.panto.recorder >/dev/null 2>&1 || true
+fi
+echo "$NEW_HASH" > "$STATE"
+
 echo "▸ done: $APP"

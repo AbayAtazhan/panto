@@ -244,16 +244,18 @@ struct ContentView: View {
             VStack(alignment: .leading, spacing: 1) {
                 Text("Screen Recording is off")
                     .font(.system(size: 11, weight: .semibold))
-                Text("Enable it, then reopen Panto.")
+                Text("If the toggle is already on, macOS lost the grant after a rebuild — reset it.")
                     .font(.system(size: 10))
                     .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             Spacer()
-            Button("Open Settings") {
-                state.requestScreenPermission()
+            Button("Fix") {
+                state.resetPermissions()
                 state.openScreenRecordingSettings()
             }
             .controlSize(.small)
+            .help("Reset the stale permission, then reopen Panto")
         }
         .padding(12)
         .background(
