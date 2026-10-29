@@ -24,7 +24,7 @@ Screen Studio 卖 $89。Panto 只做大多数人真正会用的那一件事：�
 一行命令安装：
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/USER/panto/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/AbayAtazhan/panto/main/install.sh | bash
 ```
 
 Panto 还没有公证。如果 macOS 拒绝第一次启动，右键 → 打开；或者运行：
@@ -36,7 +36,7 @@ xattr -dr com.apple.quarantine /Applications/Panto.app
 从源码构建（只需 Command Line Tools）：
 
 ```sh
-git clone https://github.com/USER/panto.git
+git clone https://github.com/AbayAtazhan/panto.git
 cd panto
 ./scripts/make_app.sh
 open build/Panto.app

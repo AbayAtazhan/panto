@@ -26,7 +26,7 @@ Screen Studio стоит $89. Panto делает то, ради чего его 
 Или одной командой:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/USER/panto/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/AbayAtazhan/panto/main/install.sh | bash
 ```
 
 Panto пока не нотаризован. Если macOS не даёт запустить: правый клик → «Открыть», либо
@@ -38,7 +38,7 @@ xattr -dr com.apple.quarantine /Applications/Panto.app
 Сборка из исходников (достаточно Command Line Tools):
 
 ```sh
-git clone https://github.com/USER/panto.git
+git clone https://github.com/AbayAtazhan/panto.git
 cd panto
 ./scripts/make_app.sh
 open build/Panto.app

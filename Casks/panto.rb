@@ -2,10 +2,10 @@ cask "panto" do
   version "0.3.0"
   sha256 "REPLACE_WITH_SHA256"
 
-  url "https://github.com/USER/panto/releases/download/v#{version}/Panto.dmg"
+  url "https://github.com/AbayAtazhan/panto/releases/download/v#{version}/Panto.dmg"
   name "Panto"
   desc "Auto-zoom for screen recordings"
-  homepage "https://github.com/USER/panto"
+  homepage "https://github.com/AbayAtazhan/panto"
 
   depends_on macos: ">= :sequoia"
 

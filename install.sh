@@ -1,13 +1,13 @@
 #!/bin/bash
 # Panto one-line installer.
 #
-#   curl -fsSL https://raw.githubusercontent.com/USER/panto/main/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/AbayAtazhan/panto/main/install.sh | bash
 #
 # Downloads the latest release DMG, installs it into /Applications, clears the
 # quarantine flag (Panto is not notarized yet) and opens it.
 set -euo pipefail
 
-REPO="${PANTO_REPO:-USER/panto}"
+REPO="${PANTO_REPO:-AbayAtazhan/panto}"
 URL="https://github.com/${REPO}/releases/latest/download/Panto.dmg"
 TMP="$(mktemp -d)"
 MOUNT="$TMP/mnt"

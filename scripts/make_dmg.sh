@@ -33,7 +33,7 @@ Panto — install
 3. Grant Screen Recording (and Microphone for voiceover), then quit Panto
    and open it again — macOS applies the permissions on the next launch.
 
-Source, issues, updates: https://github.com/USER/panto
+Source, issues, updates: https://github.com/AbayAtazhan/panto
 TXT
 
 rm -f "$DMG"

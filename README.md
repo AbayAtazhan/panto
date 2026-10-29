@@ -8,8 +8,8 @@ Every click — or every press of your own hotkey — becomes a camera move.
 <img src="docs/screenshot.png" width="420" alt="Panto window">
 
 <p>
-<img alt="CI" src="https://github.com/USER/panto/actions/workflows/build.yml/badge.svg">
-<img alt="Release" src="https://img.shields.io/github/v/release/USER/panto">
+<img alt="CI" src="https://github.com/AbayAtazhan/panto/actions/workflows/build.yml/badge.svg">
+<img alt="Release" src="https://img.shields.io/github/v/release/AbayAtazhan/panto">
 <img alt="macOS 15+" src="https://img.shields.io/badge/macOS-15%2B-black">
 <img alt="Swift" src="https://img.shields.io/badge/Swift-6-orange">
 <img alt="MIT" src="https://img.shields.io/badge/license-MIT-blue">
@@ -41,7 +41,7 @@ Languages: [简体中文](README.zh-CN.md) · [Русский](README.ru.md)
 Applications. Or let the installer handle everything:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/USER/panto/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/AbayAtazhan/panto/main/install.sh | bash
 ```
 
 Panto is not notarized yet, so macOS will refuse the first launch with *"Apple cannot check it
@@ -54,7 +54,7 @@ xattr -dr com.apple.quarantine /Applications/Panto.app
 **From source** — Xcode Command Line Tools are enough, a full Xcode install is not required:
 
 ```sh
-git clone https://github.com/USER/panto.git
+git clone https://github.com/AbayAtazhan/panto.git
 cd panto
 ./scripts/make_app.sh
 open build/Panto.app
