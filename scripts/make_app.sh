@@ -42,11 +42,23 @@ echo "▸ signing"
 DEV_KEYCHAIN="$HOME/Library/Keychains/panto-dev.keychain-db"
 SIGN_MODE="adhoc"
 SIGNED=0
-if [ -n "${PANTO_SIGN_ID:-}" ]; then
-    if codesign --force --deep --sign "$PANTO_SIGN_ID" --keychain "$DEV_KEYCHAIN" "$APP" 2>/dev/null; then
+SIGN_ID="${PANTO_SIGN_ID:-}"
+if [ -z "$SIGN_ID" ] && [ -f "$DEV_KEYCHAIN" ] && security find-identity -v -p codesigning "$DEV_KEYCHAIN" 2>/dev/null | grep "Panto Dev" | grep -qv CSSMERR; then
+    SIGN_ID="Panto Dev"
+fi
+if [ -n "$SIGN_ID" ]; then
+    # codesign only searches keychains in the user's search list.
+    KEYCHAINS=$(security list-keychains -d user | sed -e 's/^[[:space:]]*"//' -e 's/"$//')
+    if ! echo "$KEYCHAINS" | grep -q "panto-dev.keychain-db"; then
+        security list-keychains -d user -s "$DEV_KEYCHAIN" $KEYCHAINS
+    fi
+    security unlock-keychain -p panto-dev "$DEV_KEYCHAIN" >/dev/null 2>&1 || true
+fi
+if [ -n "$SIGN_ID" ]; then
+    if codesign --force --deep --sign "$SIGN_ID" --keychain "$DEV_KEYCHAIN" "$APP" 2>/dev/null; then
         SIGNED=1
         SIGN_MODE="certificate"
-        echo "  identity: $PANTO_SIGN_ID"
+        echo "  identity: $SIGN_ID"
     else
         echo "  warning: could not sign with $PANTO_SIGN_ID, falling back to ad-hoc"
     fi
@@ -60,12 +72,19 @@ fi
 # hash on every rebuild, which silently invalidates the old grant. Detect it and
 # clear the stale entry so the system prompt can appear again.
 NEW_HASH=$(codesign -dv --verbose=4 "$APP" 2>&1 | awk -F= '/^CDHash=/{print $2}')
-STATE="$ROOT/build/.last-cdhash"
-if [ "$SIGN_MODE" = "adhoc" ] && [ -f "$STATE" ] && [ "$(cat "$STATE")" != "$NEW_HASH" ]; then
-    echo "▸ binary changed → resetting stale screen-recording permission"
-    tccutil reset ScreenCapture app.panto.recorder >/dev/null 2>&1 || true
-    tccutil reset Microphone app.panto.recorder >/dev/null 2>&1 || true
+STATE="$ROOT/build/.last-signing"
+CURRENT="$SIGN_MODE:$NEW_HASH"
+if [ -f "$STATE" ]; then
+    PREVIOUS=$(cat "$STATE")
+    if [ "$PREVIOUS" != "$CURRENT" ]; then
+        PREVIOUS_MODE=${PREVIOUS%%:*}
+        if [ "$PREVIOUS_MODE" != "$SIGN_MODE" ] || [ "$SIGN_MODE" = "adhoc" ]; then
+            echo "▸ signature changed → resetting stale screen-recording permission"
+            tccutil reset ScreenCapture app.panto.recorder >/dev/null 2>&1 || true
+            tccutil reset Microphone app.panto.recorder >/dev/null 2>&1 || true
+        fi
+    fi
 fi
-echo "$NEW_HASH" > "$STATE"
+echo "$CURRENT" > "$STATE"
 
 echo "▸ done: $APP"

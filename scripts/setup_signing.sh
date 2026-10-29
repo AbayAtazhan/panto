@@ -15,7 +15,7 @@ IDENTITY="Panto Dev"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 
-if security find-identity -v -p codesigning "$KC" 2>/dev/null | grep -q "$IDENTITY"; then
+if security find-identity -v -p codesigning "$KC" 2>/dev/null | grep "$IDENTITY" | grep -qv CSSMERR; then
     echo "✔ $IDENTITY is already trusted"
     exit 0
 fi
@@ -38,6 +38,10 @@ if ! security find-identity -p codesigning "$KC" 2>/dev/null | grep -q "$IDENTIT
         -out "$WORK/identity.p12" -name "$IDENTITY" -passout pass:"$PASS" 2>/dev/null
     security import "$WORK/identity.p12" -k "$KC" -P "$PASS" -T /usr/bin/codesign >/dev/null
     security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$PASS" "$KC" >/dev/null
+fi
+
+if [ ! -f "$WORK/cert.pem" ]; then
+    security find-certificate -c "$IDENTITY" -p "$KC" > "$WORK/cert.pem"
 fi
 
 echo "▸ trusting the certificate (macOS will ask for your password)"

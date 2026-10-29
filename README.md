@@ -126,8 +126,10 @@ a **Fix** button. To recover:
 3. Still stuck? Run `./scripts/reset_permissions.sh`, then repeat.
 
 System audio is covered by the same permission (macOS calls it "Screen & System Audio Recording").
-For a grant that survives rebuilds, sign with a Developer ID or a trusted self-signed certificate —
-`PANTO_SIGN_ID="Your Identity" ./scripts/make_app.sh` is the hook for that.
+For a grant that survives rebuilds, run `./scripts/setup_signing.sh` once (it creates and trusts a
+local "Panto Dev" certificate, macOS asks for your password once). After that `make_app.sh` signs
+every build with it automatically, the designated requirement stays
+`identifier "app.panto.recorder" and certificate leaf = H"…"`, and the permission stops resetting.
 
 ## Development
 
