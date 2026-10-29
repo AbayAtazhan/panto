@@ -20,5 +20,11 @@ test: ## unit tests (needs Xcode for XCTest)
 selftest: build ## synthetic recording -> zoom -> frames, no permissions needed
 	./.build/release/Panto --selftest
 
+format: ## format Swift sources (swift format, Xcode toolchain)
+	swift format --in-place --recursive Sources Tests
+
+lint: ## lint Swift sources
+	swift format lint --recursive Sources Tests
+
 clean: ## remove build products
 	rm -rf .build build

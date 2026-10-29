@@ -5,6 +5,8 @@ Every click — or every press of your own hotkey — becomes a camera move.
 
 ![Panto demo](docs/demo.gif)
 
+<img src="docs/screenshot.png" width="420" alt="Panto window">
+
 <p>
 <img alt="CI" src="https://github.com/USER/panto/actions/workflows/build.yml/badge.svg">
 <img alt="Release" src="https://img.shields.io/github/v/release/USER/panto">
@@ -30,6 +32,8 @@ parts of the screen that matter — and gives you a timeline to fix anything the
 - **Writes an H.264 mp4** next to the raw `.mov`. Nothing is uploaded anywhere.
 
 No account, no telemetry, no Electron, no subscription.
+
+Languages: [简体中文](README.zh-CN.md) · [Русский](README.ru.md)
 
 ## Install
 

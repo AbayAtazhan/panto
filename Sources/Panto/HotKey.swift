@@ -129,7 +129,7 @@ final class HotKeyRecorderView: NSView {
 
         let text = warning ?? (isRecording ? "Press keys…" : combo.label)
         let attributes: [NSAttributedString.Key: Any] = [
-            .font: NSFont.monospacedSystemFont(ofSize: 12, weight: .semibold),
+            .font: NSFont.systemFont(ofSize: 12, weight: .semibold),
             .foregroundColor: isRecording ? NSColor.controlAccentColor : NSColor.labelColor
         ]
         let size = (text as NSString).size(withAttributes: attributes)

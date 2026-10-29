@@ -210,7 +210,8 @@ struct ContentView: View {
                 }
                 .pickerStyle(.segmented)
                 .labelsHidden()
-                .frame(width: 190)
+                .controlSize(.small)
+                .frame(width: 180)
                 .disabled(state.isRecording)
             }
 
@@ -222,7 +223,7 @@ struct ContentView: View {
                     subtitle: "Click the field and press a combo"
                 ) {
                     HotKeyField(combo: $settings.hotKey)
-                        .frame(width: 112, height: 28)
+                        .frame(width: 122, height: 28)
                 }
             }
 
@@ -234,7 +235,7 @@ struct ContentView: View {
                 subtitle: "How close the camera gets"
             ) {
                 HStack(spacing: 8) {
-                    Slider(value: $settings.zoom, in: 1.3...3.0, step: 0.1)
+                    Slider(value: $settings.zoom, in: 1.3...3.0)
                         .frame(width: 128)
                     Text(String(format: "%.1f×", settings.zoom))
                         .font(.system(size: 11, weight: .semibold, design: .monospaced))
@@ -319,7 +320,9 @@ struct ContentView: View {
                 Text(subtitle)
                     .font(.system(size: 10))
                     .foregroundStyle(.tertiary)
-                    .lineLimit(1)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .layoutPriority(1)
             }
 
             Spacer(minLength: 8)

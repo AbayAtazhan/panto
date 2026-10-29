@@ -25,6 +25,20 @@ enum Entry {
             exit(0)
         }
 
+        if let i = args.firstIndex(of: "--screenshot"), args.count > i + 1 {
+            let path = args[i + 1]
+            let icon = args.count > i + 2 ? args[i + 2] : nil
+            runBlocking {
+                await MainActor.run {
+                    Screenshot.capture(
+                        to: URL(fileURLWithPath: path),
+                        icon: icon.map { URL(fileURLWithPath: $0) }
+                    )
+                }
+            }
+            exit(0)
+        }
+
         if let i = args.firstIndex(of: "--icon"), args.count > i + 1 {
             IconGen.write(to: URL(fileURLWithPath: args[i + 1]))
             exit(0)

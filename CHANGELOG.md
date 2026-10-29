@@ -5,6 +5,18 @@ versioning: [SemVer](https://semver.org).
 
 ## [Unreleased]
 
+## [0.4.1] — 2026-10-30
+
+### Added
+- Real UI screenshot in the README, demo video (`docs/demo.mp4`).
+- `Read me.txt` with first-launch steps inside the DMG.
+- `CODE_OF_CONDUCT.md`, `.swift-format`, `make format` / `make lint`, Chinese README.
+
+### Changed
+- DMG copies are ad-hoc signed so Gatekeeper shows the standard “unidentified developer”
+  prompt instead of a missing-signature error.
+- Hotkey field uses a proportional font so ⌥⌘Z is readable.
+
 ## [0.4.0] — 2026-10-30
 
 ### Changed
