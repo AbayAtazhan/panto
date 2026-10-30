@@ -58,6 +58,9 @@ final class AppSettings: ObservableObject {
     @Published var showHUD: Bool {
         didSet { save() }
     }
+    @Published var useNotch: Bool {
+        didSet { save() }
+    }
     @Published var selectedDisplayID: CGDirectDisplayID? {
         didSet { save() }
     }
@@ -74,6 +77,7 @@ final class AppSettings: ObservableObject {
             systemAudio = stored.systemAudio
             microphone = stored.microphone ?? true
             showHUD = stored.showHUD
+            useNotch = stored.useNotch ?? true
             selectedDisplayID = stored.displayID
             if hotKey.modifiers == 0 {
                 hotKey = .fallback
@@ -86,6 +90,7 @@ final class AppSettings: ObservableObject {
             systemAudio = true
             microphone = true
             showHUD = true
+            useNotch = true
             selectedDisplayID = nil
         }
     }
@@ -99,6 +104,7 @@ final class AppSettings: ObservableObject {
         var systemAudio: Bool
         var microphone: Bool?
         var showHUD: Bool
+        var useNotch: Bool?
         var displayID: CGDirectDisplayID?
     }
 
@@ -112,6 +118,7 @@ final class AppSettings: ObservableObject {
             systemAudio: systemAudio,
             microphone: microphone,
             showHUD: showHUD,
+            useNotch: useNotch,
             displayID: selectedDisplayID
         )
         if let data = try? JSONEncoder().encode(stored) {

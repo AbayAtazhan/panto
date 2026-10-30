@@ -273,6 +273,20 @@ struct ContentView: View {
             rowDivider
 
             settingRow(
+                icon: "menubar.rectangle",
+                title: "Notch controls",
+                subtitle: NotchHUDController.isSupported ? "REC and Zoom under the camera" : "Needs a MacBook with a notch"
+            ) {
+                Toggle("", isOn: $settings.useNotch)
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
+                    .disabled(!NotchHUDController.isSupported)
+            }
+
+            rowDivider
+
+            settingRow(
                 icon: "rectangle.on.rectangle",
                 title: "Floating controls",
                 subtitle: "Never appears in the recording"

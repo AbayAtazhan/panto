@@ -27,6 +27,7 @@ final class AppState: ObservableObject {
 
     private let recorder = Recorder()
     private let hud = HUDController()
+    private let notchHUD = NotchHUDController()
     private var timer: Timer?
     private var startedAt: Date?
     private var cancellables: Set<AnyCancellable> = []
@@ -134,13 +135,22 @@ final class AppState: ObservableObject {
                 hideWindow()
                 status = "Recording"
                 if settings.showHUD {
-                    let capturedScreen = NSScreen.screens.first { $0.pantoDisplayID == display.id }
-                    hud.show(
-                        counter: zoomCounter,
-                        on: capturedScreen,
-                        onZoom: { [weak self] in self?.manualZoom() },
-                        onStop: { [weak self] in self?.stop() }
-                    )
+                    if settings.useNotch, NotchHUDController.isSupported {
+                        notchHUD.show(
+                            counter: zoomCounter,
+                            startedAt: Date(),
+                            onZoom: { [weak self] in self?.manualZoom() },
+                            onStop: { [weak self] in self?.stop() }
+                        )
+                    } else if settings.showHUD {
+                        let capturedScreen = NSScreen.screens.first { $0.pantoDisplayID == display.id }
+                        hud.show(
+                            counter: zoomCounter,
+                            on: capturedScreen,
+                            onZoom: { [weak self] in self?.manualZoom() },
+                            onStop: { [weak self] in self?.stop() }
+                        )
+                    }
                 }
             } catch {
                 isBusy = false
@@ -165,6 +175,7 @@ final class AppState: ObservableObject {
         guard isRecording else { return }
         isRecording = false
         hud.hide()
+        notchHUD.hide()
         timer?.invalidate()
         timer = nil
         isBusy = true

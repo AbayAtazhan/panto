@@ -5,6 +5,13 @@ versioning: [SemVer](https://semver.org).
 
 ## [Unreleased]
 
+## [0.5.0] — 2026-10-30
+
+### Added
+- **Notch controls**: a black strip that hangs under the MacBook notch, showing REC, the timer
+  and the zoom counter; hover it to expand Zoom / Stop. Falls back to the floating bar on Macs
+  without a notch.
+
 ## [0.4.2] — 2026-10-30
 
 ### Fixed
