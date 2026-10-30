@@ -1,17 +1,16 @@
 import AppKit
 import SwiftUI
 
-/// Collapsed state = a black strip that hangs off the notch; hovering expands it
-/// into REC + Zoom + Stop. The app is excluded from the capture, so it never
-/// appears in the recording.
+/// Controls that hang off the notch. Two fixed-size panels instead of one resizing
+/// panel: resizing a SwiftUI hosting view under the cursor made AppKit throw inside
+/// a layout pass (SIGTRAP), and tracking areas fired bogus exits during the resize.
 final class NotchHUDController {
-    private var panel: NSPanel?
-    private var hosting: HoverHostingView<NotchHUDView>?
+    private var strip: NSPanel?
+    private var expanded: NSPanel?
+    private var timer: Timer?
     private var notchFrame: NSRect = .zero
-    private var expanded = false
-    private let expansion = HUDExpansion()
-    private var onZoom: (() -> Void)?
-    private var onStop: (() -> Void)?
+    private var hideWorkItem: DispatchWorkItem?
+    private var hiding = false
 
     static func notchFrame(for screen: NSScreen) -> NSRect? {
         guard screen.safeAreaInsets.top > 1,
@@ -38,26 +37,105 @@ final class NotchHUDController {
               let notch = Self.notchFrame(for: screen) else { return }
 
         notchFrame = notch
-        expanded = false
-        expansion.expanded = false
-        self.onZoom = onZoom
-        self.onStop = onStop
 
-        let view = NotchHUDView(
-            counter: counter,
-            expansion: expansion,
-            startedAt: startedAt,
-            onZoom: onZoom,
-            onStop: onStop
+        let stripSize = NSSize(width: notch.width, height: 24)
+        let strip = makePanel(size: stripSize, root: NotchStripView(startedAt: startedAt))
+        strip.setFrameOrigin(NSPoint(x: notch.midX - stripSize.width / 2, y: notch.minY - stripSize.height))
+        strip.orderFrontRegardless()
+
+        let expandedSize = NSSize(width: 304, height: 88)
+        let expanded = makePanel(
+            size: expandedSize,
+            root: NotchExpandedView(
+                counter: counter,
+                startedAt: startedAt,
+                onZoom: onZoom,
+                onStop: onStop
+            )
         )
-        let hosting = HoverHostingView(rootView: view)
-        hosting.onHover = { [weak self] inside in
-            self?.setExpanded(inside)
+        expanded.setFrameOrigin(NSPoint(x: notch.midX - expandedSize.width / 2, y: notch.minY - expandedSize.height))
+        expanded.alphaValue = 0
+
+        self.strip = strip
+        self.expanded = expanded
+
+        let timer = Timer(timeInterval: 1.0 / 30.0, repeats: true) { [weak self] _ in
+            self?.tick()
         }
-        hosting.frame = NSRect(origin: .zero, size: collapsedSize)
+        RunLoop.main.add(timer, forMode: .common)
+        self.timer = timer
+    }
+
+    func hide() {
+        timer?.invalidate()
+        timer = nil
+        hideWorkItem?.cancel()
+        hideWorkItem = nil
+        hiding = false
+        strip?.orderOut(nil)
+        expanded?.orderOut(nil)
+        strip = nil
+        expanded = nil
+    }
+
+    // MARK: - Hover
+
+    private func tick() {
+        guard let strip, let expanded else { return }
+        let mouse = NSEvent.mouseLocation
+        let stripHit = strip.frame.insetBy(dx: -6, dy: -4)
+        let expandedHit = expanded.frame.insetBy(dx: -12, dy: -12)
+        let inside = stripHit.contains(mouse) || (expanded.isVisible && expandedHit.contains(mouse))
+
+        if inside {
+            hideWorkItem?.cancel()
+            hideWorkItem = nil
+            showExpanded()
+        } else if expanded.isVisible, hideWorkItem == nil {
+            let work = DispatchWorkItem { [weak self] in self?.hideExpanded() }
+            hideWorkItem = work
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: work)
+        }
+    }
+
+    private func showExpanded() {
+        guard let expanded else { return }
+        hiding = false
+        if !expanded.isVisible {
+            expanded.alphaValue = 0
+            expanded.orderFrontRegardless()
+        }
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = 0.12
+            expanded.animator().alphaValue = 1
+        }
+    }
+
+    private func hideExpanded() {
+        hideWorkItem = nil
+        guard let expanded, expanded.isVisible else { return }
+        // Re-check: the pointer may have come back while the fade was scheduled.
+        if expanded.frame.insetBy(dx: -12, dy: -12).contains(NSEvent.mouseLocation) { return }
+        hiding = true
+        NSAnimationContext.runAnimationGroup({ context in
+            context.duration = 0.12
+            expanded.animator().alphaValue = 0
+        }, completionHandler: { [weak self] in
+            guard let self, self.hiding else { return }
+            expanded.orderOut(nil)
+            self.hiding = false
+        })
+    }
+
+    // MARK: - Panels
+
+    private func makePanel<Content: View>(size: NSSize, root: Content) -> NSPanel {
+        let hosting = NSHostingView(rootView: root)
+        hosting.frame = NSRect(origin: .zero, size: size)
+        hosting.autoresizingMask = [.width, .height]
 
         let panel = NSPanel(
-            contentRect: hosting.frame,
+            contentRect: NSRect(origin: .zero, size: size),
             styleMask: [.borderless, .nonactivatingPanel],
             backing: .buffered,
             defer: false
@@ -69,161 +147,92 @@ final class NotchHUDController {
         panel.isOpaque = false
         panel.hasShadow = false
         panel.hidesOnDeactivate = false
-        panel.acceptsMouseMovedEvents = true
         panel.contentView = hosting
-        self.panel = panel
-        self.hosting = hosting
-
-        layout(animated: false)
-        panel.orderFrontRegardless()
+        return panel
     }
+}
 
-    func hide() {
-        panel?.orderOut(nil)
-        panel = nil
-        hosting = nil
-        expanded = false
-    }
+struct NotchStripView: View {
+    let startedAt: Date
 
-    private var collapsedSize: NSSize {
-        NSSize(width: notchFrame.width, height: 26)
-    }
-
-    private var expandedSize: NSSize {
-        NSSize(width: 286, height: 80)
-    }
-
-    private func setExpanded(_ value: Bool) {
-        guard value != expanded else { return }
-        expanded = value
-        if value {
-            withAnimation(.spring(response: 0.28, dampingFraction: 0.85)) {
-                expansion.expanded = true
+    var body: some View {
+        ZStack {
+            NotchShape(radius: 12).fill(Color.black)
+            HStack(spacing: 5) {
+                Circle().fill(Color.red).frame(width: 6, height: 6)
+                SwiftUI.TimelineView(.periodic(from: .now, by: 0.5)) { _ in
+                    Text(NotchTimecode.string(since: startedAt))
+                        .font(.system(size: 10, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(.white.opacity(0.9))
+                }
             }
-        } else {
-            withAnimation(.easeOut(duration: 0.15)) {
-                expansion.expanded = false
-            }
-        }
-        layout(animated: true)
-    }
-
-    private func layout(animated: Bool) {
-        guard let panel else { return }
-        let size = expanded ? expandedSize : collapsedSize
-        let frame = NSRect(
-            x: notchFrame.midX - size.width / 2,
-            y: notchFrame.minY - size.height,
-            width: size.width,
-            height: size.height
-        )
-        if animated {
-            NSAnimationContext.runAnimationGroup { context in
-                context.duration = 0.2
-                context.timingFunction = CAMediaTimingFunction(name: .easeOut)
-                panel.animator().setFrame(frame, display: true)
-            }
-        } else {
-            panel.setFrame(frame, display: true)
+            .padding(.bottom, 2)
         }
     }
 }
 
-final class HUDExpansion: ObservableObject {
-    @Published var expanded = false
-}
-
-/// NSHostingView that reports hover in and out.
-final class HoverHostingView<Content: View>: NSHostingView<Content> {
-    var onHover: ((Bool) -> Void)?
-    private var tracking: NSTrackingArea?
-
-    override func updateTrackingAreas() {
-        super.updateTrackingAreas()
-        if let tracking {
-            removeTrackingArea(tracking)
-        }
-        let area = NSTrackingArea(
-            rect: .zero,
-            options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect],
-            owner: self,
-            userInfo: nil
-        )
-        addTrackingArea(area)
-        tracking = area
-    }
-
-    override func mouseEntered(with event: NSEvent) {
-        onHover?(true)
-    }
-
-    override func mouseExited(with event: NSEvent) {
-        onHover?(false)
-    }
-}
-
-struct NotchHUDView: View {
+struct NotchExpandedView: View {
     @ObservedObject var counter: ZoomCounter
-    @ObservedObject var expansion: HUDExpansion
     let startedAt: Date
     let onZoom: () -> Void
     let onStop: () -> Void
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            NotchShape()
-                .fill(Color.black)
+        ZStack {
+            NotchShape(radius: 16).fill(Color.black)
 
-            HStack(spacing: expansion.expanded ? 12 : 6) {
-                Circle()
-                    .fill(Color.red)
-                    .frame(width: 6, height: 6)
+            HStack(spacing: 12) {
+                Circle().fill(Color.red).frame(width: 8, height: 8)
 
                 SwiftUI.TimelineView(.periodic(from: .now, by: 0.5)) { _ in
-                    Text(timecode)
-                        .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                    Text(NotchTimecode.string(since: startedAt))
+                        .font(.system(size: 13, weight: .semibold, design: .monospaced))
                         .foregroundStyle(.white)
                 }
 
                 if counter.count > 0 {
                     Text("\(counter.count)")
-                        .font(.system(size: 9, weight: .bold, design: .rounded))
-                        .padding(.horizontal, 5)
-                        .padding(.vertical, 1)
+                        .font(.system(size: 10, weight: .bold, design: .rounded))
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
                         .background(Capsule().fill(Color.orange))
                         .foregroundStyle(.black)
                 }
 
-                if expansion.expanded {
-                    Divider().frame(height: 16)
+                Spacer(minLength: 0)
 
-                    Button(action: onZoom) {
-                        Label("Zoom", systemImage: "plus.magnifyingglass")
-                            .font(.system(size: 11, weight: .semibold))
-                            .foregroundStyle(.white)
+                Button(action: onZoom) {
+                    HStack(spacing: 5) {
+                        Image(systemName: "plus.magnifyingglass")
+                        Text("Zoom")
                     }
-                    .buttonStyle(.plain)
-
-                    Divider().frame(height: 16)
-
-                    Button(action: onStop) {
-                        Image(systemName: "stop.fill")
-                            .font(.system(size: 11, weight: .bold))
-                            .foregroundStyle(.white)
-                    }
-                    .buttonStyle(.plain)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(Capsule().fill(Color.white.opacity(0.14)))
                 }
+                .buttonStyle(.plain)
+
+                Button(action: onStop) {
+                    Image(systemName: "stop.fill")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundStyle(.white)
+                        .frame(width: 30, height: 30)
+                        .background(Circle().fill(Color.red.opacity(0.85)))
+                }
+                .buttonStyle(.plain)
             }
-            .padding(.horizontal, 10)
-            .frame(height: expansion.expanded ? 30 : 26)
-            .padding(.bottom, expansion.expanded ? 26 : 0)
+            .padding(.horizontal, 18)
+            .padding(.bottom, 14)
         }
         .contentShape(Rectangle())
-        .animation(.spring(response: 0.28, dampingFraction: 0.85), value: expansion.expanded)
     }
+}
 
-    private var timecode: String {
-        let total = Int(Date().timeIntervalSince(startedAt))
+enum NotchTimecode {
+    static func string(since date: Date) -> String {
+        let total = Int(Date().timeIntervalSince(date))
         return String(format: "%02d:%02d", total / 60, total % 60)
     }
 }

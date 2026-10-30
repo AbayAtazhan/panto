@@ -5,6 +5,14 @@ versioning: [SemVer](https://semver.org).
 
 ## [Unreleased]
 
+## [0.5.1] — 2026-10-30
+
+### Fixed
+- Crash when moving the pointer off the notch controls: resizing the SwiftUI hosting view under
+  the cursor threw inside AppKit's layout pass (SIGTRAP). The HUD is now two fixed-size panels
+  with a polling hit-test, no window resizing and no tracking areas.
+- The expanded panel no longer disappears while the pointer comes back during its fade-out.
+
 ## [0.5.0] — 2026-10-30
 
 ### Added
