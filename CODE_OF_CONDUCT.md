@@ -26,9 +26,9 @@ Examples of unacceptable behavior:
 
 ## Enforcement
 
-Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to the
-project maintainers at `conduct@example.com`. All complaints will be reviewed and investigated
-promptly and fairly. Maintainers are obligated to respect the privacy and security of the
+Instances of abusive, harassing, or otherwise unacceptable behavior may be reported privately
+to the maintainer through GitHub (profile → Report abuse, or a direct message). All complaints
+will be reviewed and investigated promptly and fairly. Maintainers are obligated to respect the privacy and security of the
 reporter.
 
 ## Enforcement guidelines

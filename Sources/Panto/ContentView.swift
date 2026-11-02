@@ -405,7 +405,7 @@ struct ContentView: View {
 
             Spacer()
 
-            Text("MIT · v0.4")
+            Text("MIT · v\(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "dev")")
                 .font(.system(size: 10))
                 .foregroundStyle(.tertiary)
         }

@@ -1,10 +1,10 @@
 #!/bin/bash
 # Usage: ./scripts/set_repo.sh owner/repo
-# Replaces the AbayAtazhan/panto placeholder in docs, badges, installer and cask.
+# Replaces the current repository path in docs, badges, installer and cask.
 set -euo pipefail
 REPO="${1:-}"
-if [ -z "$REPO" ] || [ "$REPO" = "AbayAtazhan/panto" ]; then
-    echo "usage: ./scripts/set_repo.sh your-github-name/panto"
+if ! echo "$REPO" | grep -qE '^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$'; then
+    echo "usage: ./scripts/set_repo.sh owner/repo"
     exit 1
 fi
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

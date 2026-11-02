@@ -2,9 +2,8 @@
 
 ## Reporting a vulnerability
 
-Open a private security advisory on GitHub, or email `security@example.com`
-(replace with a real address before publishing). Please do not open a public issue for
-anything that could be exploited.
+Open a private security advisory on GitHub: **Security → Advisories → Report a vulnerability**.
+Please do not open a public issue for anything that could be exploited.
 
 You can expect an answer within 7 days. Fixes ship in the next patch release, and credit is
 given in `CHANGELOG.md` unless you prefer to stay anonymous.

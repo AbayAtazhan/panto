@@ -24,8 +24,8 @@ parts of the screen that matter — and gives you a timeline to fix anything the
 - **Records system audio and your microphone** as separate tracks, mixed on export —
   narrate the demo without losing the app's sound.
 - **Zooms three ways**: on clicks, on your own global hotkey (default `⌥⌘Z`), or both.
-- **Floating REC bar** with a Zoom button and a Stop button. The app is excluded from the
-  capture, so the bar never shows up in the video.
+- **Controls in the notch or a floating bar**: REC, the timer and a Zoom button. The panel
+  belongs to Panto, and Panto is excluded from the capture, so it never shows up in the video.
 - **Timeline editor**: drag zoom bars, click the preview to place a zoom exactly where you want,
   delete shots, change the zoom strength, export again.
 - **Writes an H.264 mp4** next to the raw `.mov`. Nothing is uploaded anywhere.
@@ -109,7 +109,9 @@ keeps it inside the frame, and lets you edit every move before exporting.
 ## Known limits
 
 - macOS 15+ only (ScreenCaptureKit).
-- No microphone yet — system audio only.
+- Records one display at a time.
+- The notch panel is drawn under the housing, not inside the physical cutout (macOS does not
+  allow that); on Macs without a notch the floating bar is used instead.
 - Release builds are ad-hoc signed until the project has a Developer ID. First launch:
   right-click → Open, or `xattr -dr com.apple.quarantine /Applications/Panto.app`.
 - The camera follows clicks/hotkeys; it does not understand what is on screen.

@@ -6,8 +6,8 @@
 
 | | |
 |---|---|
-| ✅ | Репозиторий публичный, MIT, README на EN/RU/ZH, реальный скриншот, demo.gif + demo.mp4 |
-| ✅ | Релиз `v0.4.2`, в нём `Panto.dmg` и `Panto.zip`; `releases/latest/download/Panto.dmg` работает |
+| ✅ | Репозиторий публичный, MIT, README на EN/RU/ZH, реальный скриншот, demo.gif + demo.mp4, контролы в нотче |
+| ✅ | Релиз `v0.5.2`, в нём `Panto.dmg` и `Panto.zip`; `releases/latest/download/Panto.dmg` работает |
 | ✅ | `install.sh` (одна строка), `Read me.txt` внутри DMG, topics, описание |
 | ⚠️ | CI-workflow не запушены (у токена нет scope `workflow`) — бейджа CI нет |
 | ⚠️ | Нотаризации нет ($99) — первый запуск через правый клик или `install.sh` |

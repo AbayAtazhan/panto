@@ -1,6 +1,6 @@
 cask "panto" do
-  version "0.3.0"
-  sha256 "REPLACE_WITH_SHA256"
+  version "0.5.2"
+  sha256 "a628be6b61563585e4f8bc16add3826a3cef99f8818a2d24979f6a5e86b72f30"
 
   url "https://github.com/AbayAtazhan/panto/releases/download/v#{version}/Panto.dmg"
   name "Panto"

@@ -5,6 +5,14 @@ versioning: [SemVer](https://semver.org).
 
 ## [Unreleased]
 
+## [0.5.2] — 2026-11-02
+
+### Fixed
+- The footer showed `v0.4`; the version now comes from the bundle.
+- README still claimed there was no microphone and did not mention the notch controls.
+- Placeholder support email addresses removed from SECURITY and CODE_OF_CONDUCT.
+- Homebrew cask pointed at 0.3.0 with an empty sha256.
+
 ## [0.5.1] — 2026-10-30
 
 ### Fixed
