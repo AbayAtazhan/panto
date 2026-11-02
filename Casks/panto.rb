@@ -1,6 +1,6 @@
 cask "panto" do
-  version "0.5.2"
-  sha256 "a628be6b61563585e4f8bc16add3826a3cef99f8818a2d24979f6a5e86b72f30"
+  version "0.6.0"
+  sha256 "0a545d36f4f5b7374d916d0a85f855f41c0c57ceca34ed9a7bae5fa9ab9d94fa"
 
   url "https://github.com/AbayAtazhan/panto/releases/download/v#{version}/Panto.dmg"
   name "Panto"
@@ -14,7 +14,7 @@ cask "panto" do
   caveats <<~EOS
     Panto is not notarized yet. If macOS blocks the first launch, run:
       xattr -dr com.apple.quarantine /Applications/Panto.app
-    Or install with: brew install --cask --no-quarantine panto
+    Or install with: brew install --cask --no-quarantine AbayAtazhan/panto/panto
   EOS
 
   zap trash: [

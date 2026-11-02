@@ -275,13 +275,19 @@ struct ContentView: View {
             settingRow(
                 icon: "menubar.rectangle",
                 title: "Notch controls",
-                subtitle: NotchHUDController.isSupported ? "REC and Zoom under the camera" : "Needs a MacBook with a notch"
+                subtitle: NotchHUDController.isSupported ? "REC and Zoom under the camera, replaces the bar" : "Needs a MacBook with a notch"
             ) {
-                Toggle("", isOn: $settings.useNotch)
-                    .labelsHidden()
-                    .toggleStyle(.switch)
-                    .controlSize(.small)
-                    .disabled(!NotchHUDController.isSupported)
+                Toggle("", isOn: Binding(
+                    get: { settings.useNotch },
+                    set: { value in
+                        settings.useNotch = value
+                        if value { settings.showHUD = false }
+                    }
+                ))
+                .labelsHidden()
+                .toggleStyle(.switch)
+                .controlSize(.small)
+                .disabled(!NotchHUDController.isSupported)
             }
 
             rowDivider
@@ -291,10 +297,16 @@ struct ContentView: View {
                 title: "Floating controls",
                 subtitle: "Never appears in the recording"
             ) {
-                Toggle("", isOn: $settings.showHUD)
-                    .labelsHidden()
-                    .toggleStyle(.switch)
-                    .controlSize(.small)
+                Toggle("", isOn: Binding(
+                    get: { settings.showHUD },
+                    set: { value in
+                        settings.showHUD = value
+                        if value { settings.useNotch = false }
+                    }
+                ))
+                .labelsHidden()
+                .toggleStyle(.switch)
+                .controlSize(.small)
             }
         }
         .padding(.vertical, 4)

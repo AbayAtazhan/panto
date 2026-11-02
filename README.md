@@ -43,6 +43,12 @@ Applications. Or let the installer handle everything:
 curl -fsSL https://raw.githubusercontent.com/AbayAtazhan/panto/main/install.sh | bash
 ```
 
+Or with Homebrew:
+
+```sh
+brew install --cask AbayAtazhan/panto/panto
+```
+
 Panto is not notarized yet, so macOS will refuse the first launch with *"Apple cannot check it
 for malicious software"*. The installer clears the quarantine flag; for a manual install run:
 

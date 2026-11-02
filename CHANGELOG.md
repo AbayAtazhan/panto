@@ -5,6 +5,13 @@ versioning: [SemVer](https://semver.org).
 
 ## [Unreleased]
 
+## [0.6.0] — 2026-11-02
+
+### Changed
+- “Notch controls” and “Floating controls” are now an exclusive choice: turning one on turns the
+  other off. On Macs without a notch the floating bar is used automatically.
+- Homebrew: the app is available from a tap, `brew install --cask AbayAtazhan/panto/panto`.
+
 ## [0.5.2] — 2026-11-02
 
 ### Fixed

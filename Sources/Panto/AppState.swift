@@ -135,14 +135,15 @@ final class AppState: ObservableObject {
                 hideWindow()
                 status = "Recording"
                 if settings.showHUD {
-                    if settings.useNotch, NotchHUDController.isSupported {
+                    let notchAvailable = NotchHUDController.isSupported
+                    if settings.useNotch, notchAvailable {
                         notchHUD.show(
                             counter: zoomCounter,
                             startedAt: Date(),
                             onZoom: { [weak self] in self?.manualZoom() },
                             onStop: { [weak self] in self?.stop() }
                         )
-                    } else if settings.showHUD {
+                    } else if settings.showHUD || settings.useNotch {
                         let capturedScreen = NSScreen.screens.first { $0.pantoDisplayID == display.id }
                         hud.show(
                             counter: zoomCounter,
