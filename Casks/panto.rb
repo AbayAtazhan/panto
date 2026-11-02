@@ -7,7 +7,7 @@ cask "panto" do
   desc "Auto-zoom for screen recordings"
   homepage "https://github.com/AbayAtazhan/panto"
 
-  depends_on macos: ">= :sequoia"
+  depends_on macos: :sequoia
 
   app "Panto.app"
 

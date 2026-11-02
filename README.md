@@ -46,8 +46,11 @@ curl -fsSL https://raw.githubusercontent.com/AbayAtazhan/panto/main/install.sh |
 Or with Homebrew:
 
 ```sh
+brew trust AbayAtazhan/panto
 brew install --cask AbayAtazhan/panto/panto
 ```
+
+Homebrew 7 asks you to trust third-party taps once; `brew trust` is that one-time step.
 
 Panto is not notarized yet, so macOS will refuse the first launch with *"Apple cannot check it
 for malicious software"*. The installer clears the quarantine flag; for a manual install run:
